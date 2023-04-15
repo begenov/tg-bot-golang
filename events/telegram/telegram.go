@@ -58,6 +58,7 @@ func (p *Processor) Process(event events.Event) error {
 	default:
 		return e.Wrap("can't process message", ErrUnknownEventType)
 	}
+	return nil
 }
 
 func (p *Processor) processMessage(event events.Event) error {

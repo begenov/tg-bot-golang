@@ -19,8 +19,6 @@ type Storage struct {
 
 const defoultPerm = 0774
 
-
-
 func NewStorage(basePath string) Storage {
 	return Storage{basePath: basePath}
 }
@@ -92,10 +90,11 @@ func (s Storage) IsExists(p *storage.Page) (bool, error) {
 		return false, e.Wrap("can't  check if file exists", err)
 	}
 	path := filepath.Join(s.basePath, p.UserName, fileName)
-	switch _, err = os.Stat(path) {
-	case errors.Is(err, os.ErrNotExist):
+	_, err = os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
 		return false, nil
-	case err != nil:
+	}
+	if err != nil {
 		msg := fmt.Sprintf("can't check if file %s exists", path)
 		return false, e.Wrap(msg, err)
 	}
