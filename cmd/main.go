@@ -3,10 +3,16 @@ package main
 import (
 	"flag"
 	"log"
+
+	"github.com/begenov/tg-bot-golang/clients/telegramclients"
+)
+
+const (
+	tgBotHost = "api.telegram.org"
 )
 
 func main() {
-	t := mustToken()
+	tgClient := telegramclients.NewClient(mustToken(), tgBotHost)
 }
 
 func mustToken() string {
