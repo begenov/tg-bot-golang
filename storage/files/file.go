@@ -91,9 +91,11 @@ func (s Storage) IsExists(p *storage.Page) (bool, error) {
 	}
 	path := filepath.Join(s.basePath, p.UserName, fileName)
 	_, err = os.Stat(path)
+
 	if errors.Is(err, os.ErrNotExist) {
 		return false, nil
 	}
+
 	if err != nil {
 		msg := fmt.Sprintf("can't check if file %s exists", path)
 		return false, e.Wrap(msg, err)
