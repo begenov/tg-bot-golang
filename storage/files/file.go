@@ -19,7 +19,7 @@ type Storage struct {
 
 const defoultPerm = 0774
 
-var ErrNoSavePages = errors.New("no saved page")
+
 
 func NewStorage(basePath string) Storage {
 	return Storage{basePath: basePath}
@@ -64,7 +64,7 @@ func (s Storage) PickRandom(userName string) (page *storage.Page, err error) {
 		return nil, err
 	}
 	if len(files) == 0 {
-		return nil, ErrNoSavePages
+		return nil, storage.ErrNoSavePages
 	}
 
 	rand.New(rand.NewSource(time.Now().Unix()))
