@@ -1,4 +1,4 @@
-package telegramclients
+package telegram
 
 type UpdatesResponse struct {
 	Ok     bool     `json:"ok"`
@@ -17,9 +17,9 @@ type IncomingMessage struct {
 }
 
 type From struct {
-	UserName string `json:"username"`
+	Username string `json:"username"`
 }
 
 type Chat struct {
-	ID int `json:"id"`
+	Id int `json:"id"`
 }

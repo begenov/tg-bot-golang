@@ -19,34 +19,32 @@ type Storage struct {
 
 const defoultPerm = 0774
 
-func NewStorage(basePath string) Storage {
+func New(basePath string) Storage {
 	return Storage{basePath: basePath}
 }
 
-func (s Storage) Save(p *storage.Page) (err error) {
+func (s Storage) Save(page *storage.Page) (err error) {
 	defer func() {
-		err = e.WrapIfErr("can't save page", err)
+		err = e.WrapIfErr("can't save", err)
 	}()
+	fPath := filepath.Join(s.basePath, page.UserName)
 
-	filePath := filepath.Join(s.basePath, p.UserName)
-
-	if err := os.MkdirAll(filePath, defoultPerm); err != nil {
+	if err := os.MkdirAll(fPath, defoultPerm); err != nil {
 		return err
 	}
-
-	fileName, err := fileName(p)
+	fName, err := fileName(page)
 	if err != nil {
 		return err
 	}
-	filePath = filepath.Join(filePath, fileName)
-	file, err := os.Create(filePath)
+	fPath = filepath.Join(fPath, fName)
+	file, err := os.Create(fPath)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		_ = file.Close()
 	}()
-	if err := gob.NewEncoder(file).Encode(p); err != nil {
+	if err := gob.NewEncoder(file).Encode(page); err != nil {
 		return err
 	}
 	return nil
@@ -56,20 +54,39 @@ func (s Storage) PickRandom(userName string) (page *storage.Page, err error) {
 	defer func() {
 		err = e.WrapIfErr("can't pick random page", err)
 	}()
-	fikePath := filepath.Join(s.basePath, userName)
-	files, err := os.ReadDir(fikePath)
+
+	// 1 check user folder
+	// 2 create folder
+
+	path := filepath.Join(s.basePath, userName)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 	if len(files) == 0 {
 		return nil, storage.ErrNoSavePages
 	}
-
-	rand.New(rand.NewSource(time.Now().Unix()))
+	// 0-9
+	rand.Seed(time.Now().UnixNano())
 	n := rand.Intn(len(files))
 	file := files[n]
+	return s.decodePath(filepath.Join(path, file.Name()))
+}
 
-	return s.decodePage(filepath.Join(fikePath, file.Name()))
+func (s Storage) IsExists(p *storage.Page) (bool, error) {
+	fileName, err := fileName(p)
+	if err != nil {
+		return false, e.Wrap("can't check if file exists", err)
+	}
+	path := filepath.Join(s.basePath, p.UserName, fileName)
+	switch _, err = os.Stat(path); {
+	case errors.Is(err, os.ErrNotExist):
+		return false, nil
+	case err != nil:
+		msg := fmt.Sprintf("can't check if file %s exists", path)
+		return false, e.Wrap(msg, err)
+	}
+	return true, nil
 }
 
 func (s Storage) Remove(p *storage.Page) error {
@@ -84,27 +101,9 @@ func (s Storage) Remove(p *storage.Page) error {
 	}
 	return nil
 }
-func (s Storage) IsExists(p *storage.Page) (bool, error) {
-	fileName, err := fileName(p)
-	if err != nil {
-		return false, e.Wrap("can't  check if file exists", err)
-	}
-	path := filepath.Join(s.basePath, p.UserName, fileName)
-	_, err = os.Stat(path)
 
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	}
-
-	if err != nil {
-		msg := fmt.Sprintf("can't check if file %s exists", path)
-		return false, e.Wrap(msg, err)
-	}
-	return true, nil
-}
-
-func (s Storage) decodePage(filePath string) (*storage.Page, error) {
-	f, err := os.Open(filePath)
+func (s Storage) decodePath(filepath string) (*storage.Page, error) {
+	f, err := os.Open(filepath)
 	if err != nil {
 		return nil, e.Wrap("can't decode page", err)
 	}
